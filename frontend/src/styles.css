@@ -1,0 +1,383 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+:root {
+  color-scheme: light;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  color: #10233a;
+  background:
+    radial-gradient(circle at top left, rgba(255, 193, 133, 0.55), transparent 34%),
+    radial-gradient(circle at top right, rgba(96, 176, 255, 0.28), transparent 32%),
+    linear-gradient(160deg, #f4efe7 0%, #eef5fb 48%, #f5fbf6 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.hero-card,
+.panel {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(16, 35, 58, 0.08);
+  border-radius: 28px;
+  box-shadow: 0 22px 60px rgba(30, 60, 90, 0.12);
+}
+
+.hero-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.hero-copy h1,
+.panel h2 {
+  margin: 0;
+  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+}
+
+.hero-copy h1 {
+  margin-top: 10px;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1.05;
+  max-width: 760px;
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: #b05522;
+  font-weight: 800;
+}
+
+.hero-text {
+  margin: 16px 0 0;
+  max-width: 760px;
+  font-size: 1.02rem;
+  line-height: 1.75;
+  color: #44596f;
+}
+
+.status-pill {
+  align-self: flex-start;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-pill.ready {
+  background: #e6f7eb;
+  color: #18794e;
+}
+
+.status-pill.model-missing {
+  background: #fff1d7;
+  color: #a45d00;
+}
+
+.status-pill.offline {
+  background: #ffe3df;
+  color: #b32b1d;
+}
+
+.status-pill.checking {
+  background: #e7eef8;
+  color: #335b8d;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 24px;
+}
+
+.result-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.panel {
+  padding: 28px;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.mode-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(96px, 1fr));
+  gap: 8px;
+  padding: 6px;
+  border-radius: 18px;
+  background: #eef4f8;
+}
+
+.mode-button {
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #4f687d;
+  font-weight: 800;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.mode-button.active {
+  background: linear-gradient(135deg, #16375a 0%, #1f6f84 100%);
+  color: #fff;
+}
+
+.upload-dropzone {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 26px;
+  border: 1.5px dashed rgba(16, 35, 58, 0.16);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(247, 250, 255, 0.78));
+  cursor: pointer;
+}
+
+.upload-dropzone input {
+  display: none;
+}
+
+.upload-dropzone span {
+  font-weight: 800;
+  color: #16375a;
+}
+
+.upload-dropzone small,
+.helper-text,
+.empty-state p {
+  color: #597088;
+  line-height: 1.6;
+}
+
+.image-card {
+  margin-top: 20px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #eff4f8;
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+}
+
+.preview-image,
+.camera-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.camera-card {
+  min-height: 320px;
+  background: linear-gradient(180deg, #0e2236, #16375a);
+}
+
+.camera-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.camera-status-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.camera-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.camera-status.online {
+  background: #e6f7eb;
+  color: #18794e;
+}
+
+.camera-status.offline {
+  background: #ffe7e2;
+  color: #a33326;
+}
+
+.camera-status.idle {
+  background: #edf2f7;
+  color: #4c6479;
+}
+
+.primary-button,
+.secondary-button {
+  margin-top: 20px;
+  padding: 15px 18px;
+  border: 0;
+  border-radius: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-button {
+  width: 100%;
+  background: linear-gradient(135deg, #16375a 0%, #1f6f84 100%);
+  color: white;
+}
+
+.primary-button.inline {
+  margin-top: 0;
+  width: auto;
+}
+
+.secondary-button {
+  margin-top: 0;
+  background: #eef4f8;
+  color: #16375a;
+}
+
+.secondary-button.accent {
+  background: #dff5eb;
+  color: #18794e;
+}
+
+.secondary-button.danger {
+  background: #ffe7e2;
+  color: #a33326;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.message {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.error-message {
+  background: #ffe6e2;
+  color: #a33326;
+}
+
+.prediction-badge {
+  margin-top: 20px;
+  padding: 18px 22px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fff4de 0%, #eff7ff 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prediction-label {
+  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  font-size: clamp(2.8rem, 9vw, 5rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.prediction-confidence {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1f6f84;
+}
+
+.top-predictions {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.top-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 16px;
+  border-radius: 16px;
+  background: #f4f8fc;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  text-align: center;
+}
+
+.empty-state.compact {
+  min-height: 180px;
+}
+
+.hidden-canvas {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .hero-card,
+  .content-grid {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .hero-card {
+    padding: 24px;
+  }
+
+  .panel-head {
+    align-items: stretch;
+  }
+
+  .mode-switch {
+    width: 100%;
+  }
+
+  .camera-actions {
+    flex-direction: column;
+  }
+
+  .primary-button.inline,
+  .secondary-button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,7 @@
+﻿fastapi==0.116.1
+uvicorn[standard]==0.35.0
+python-multipart==0.0.20
+numpy==1.26.4
+opencv-python==4.11.0.86
+mediapipe==0.10.21
+tensorflow==2.19.0
