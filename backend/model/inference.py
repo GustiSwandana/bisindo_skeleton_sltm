@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,6 +33,7 @@ class SignPredictor:
     ) -> None:
         self.model_path = Path(model_path)
         self.metadata_path = Path(metadata_path)
+        # Extractor tetap memakai 2 tangan; metadata menentukan berapa slot tangan yang dipakai model.
         self.extractor = HandSkeletonExtractor(static_image_mode=True, max_num_hands=2)
         self._model: keras.Model | None = None
         self._metadata: dict[str, Any] | None = None
@@ -63,6 +64,7 @@ class SignPredictor:
     @property
     def model(self) -> keras.Model:
         if self._model is None:
+            # Lazy loading mempercepat startup API saat model belum dibutuhkan.
             self._model = keras.models.load_model(self.model_path)
         return self._model
 
@@ -87,6 +89,7 @@ class SignPredictor:
         return self.predict_image(image_bgr)
 
     def predict_image(self, image_bgr: np.ndarray) -> PredictionResult:
+        # Feature dimension dan jumlah tangan mengikuti metadata model agar inference kompatibel.
         detection = self.extractor.detect(
             image_bgr,
             draw=True,
@@ -132,3 +135,4 @@ class SignPredictor:
             else None,
             message=detection.message if detection.message else 'Prediksi berhasil.',
         )
+

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Predictor dibuat sekali saat startup agar model tidak di-load ulang setiap request.
 predictor = SignPredictor()
 
 
@@ -60,6 +61,7 @@ async def predict_image(file: UploadFile = File(...)) -> JSONResponse:
     image_bytes = await file.read()
     result = predictor.predict_bytes(image_bytes)
 
+    # 422 dipakai saat request valid tetapi tangan tidak berhasil diekstraksi.
     status_code = 200 if result.success else 422
     return JSONResponse(
         status_code=status_code,
@@ -73,3 +75,4 @@ async def predict_image(file: UploadFile = File(...)) -> JSONResponse:
             "message": result.message,
         },
     )
+

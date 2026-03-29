@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 from pathlib import Path
@@ -42,12 +42,14 @@ def train_model(
     if val_split.features.shape[0] == 0:
         raise ValueError('Seluruh data validasi gagal diproses. Periksa deteksi tangan pada dataset.')
 
+    # Bentuk input model mengikuti hasil extractor: sequence_length x feature_dim.
     model = build_lstm_classifier(
         sequence_length=train_split.features.shape[1],
         feature_dim=train_split.features.shape[2],
         num_classes=len(class_names),
     )
 
+    # Callback menjaga training lebih stabil dan menyimpan checkpoint terbaik berdasarkan val_accuracy.
     callbacks = [
         keras.callbacks.EarlyStopping(
             monitor='val_loss',
@@ -78,6 +80,7 @@ def train_model(
         verbose=1,
     )
 
+    # Setelah training, evaluasi ulang dipakai untuk menyimpan metadata dan confusion matrix.
     metrics = model.evaluate(val_split.features, val_split.labels, verbose=0)
     val_probabilities = model.predict(val_split.features, verbose=0)
     val_predictions = np.argmax(val_probabilities, axis=1)
@@ -162,3 +165,4 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
+

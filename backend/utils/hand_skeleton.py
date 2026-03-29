@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
@@ -66,6 +66,7 @@ class HandSkeletonExtractor:
 
     @classmethod
     def _generate_detection_variants(cls, image_bgr: np.ndarray) -> list[DetectionVariant]:
+        # Augmentasi ringan di tahap inferensi membantu file rotate/flip tetap bisa terbaca.
         lab = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2LAB)
         l_channel, a_channel, b_channel = cv2.split(lab)
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
@@ -132,6 +133,7 @@ class HandSkeletonExtractor:
     ) -> HandDetectionResult:
         expected_hands = max_hands or self.max_num_hands
 
+        # Coba beberapa varian gambar dan ambil varian pertama yang berhasil mendeteksi tangan.
         for variant in self._generate_detection_variants(image_bgr):
             rgb_image = cv2.cvtColor(variant.image, cv2.COLOR_BGR2RGB)
             results = self._hands.process(rgb_image)
@@ -163,7 +165,7 @@ class HandSkeletonExtractor:
             if not detected_hands:
                 continue
 
-            # Prefer consistent anatomical ordering; fall back to image position when needed.
+            # Urutan tangan dibuat stabil agar slot sequence tangan-1 dan tangan-2 konsisten.
             detected_hands.sort(
                 key=lambda item: (
                     {'Left': 0, 'Right': 1}.get(item['handedness'], 2),
@@ -214,3 +216,4 @@ class HandSkeletonExtractor:
         if not success:
             return None
         return base64.b64encode(buffer.tobytes()).decode('utf-8')
+

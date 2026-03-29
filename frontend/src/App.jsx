@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import PredictionCard from './components/PredictionCard'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
@@ -22,6 +22,7 @@ function App() {
   const isPredictingRef = useRef(false)
 
   useEffect(() => {
+    // Cek status backend saat halaman pertama kali dibuka.
     const checkApi = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/health`)
@@ -37,6 +38,7 @@ function App() {
 
   useEffect(() => {
     return () => {
+      // Blob preview dibersihkan agar tidak menyisakan object URL di browser.
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl)
       }
@@ -45,6 +47,7 @@ function App() {
 
   useEffect(() => {
     return () => {
+      // Pastikan kamera dimatikan saat komponen dilepas.
       stopWebcam()
     }
   }, [])
@@ -93,6 +96,7 @@ function App() {
         return
       }
 
+      // Guard ini mencegah request prediksi menumpuk saat frame sebelumnya belum selesai diproses.
       if (!isPredictingRef.current) {
         const frameBlob = await captureFrameBlob()
         if (frameBlob) {
@@ -168,6 +172,7 @@ function App() {
         return
       }
 
+      // Video live ditangkap ke canvas lalu dikirim sebagai JPEG ke backend.
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
 
@@ -190,6 +195,7 @@ function App() {
     formData.append('file', imageSource, 'capture.jpg')
 
     try {
+      // Upload dan webcam memakai endpoint yang sama agar pipeline backend tetap sederhana.
       const response = await fetch(`${API_BASE_URL}/predict`, {
         method: 'POST',
         body: formData,
@@ -415,3 +421,4 @@ function App() {
 }
 
 export default App
+

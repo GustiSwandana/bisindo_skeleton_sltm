@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Iterable
 
@@ -16,6 +16,7 @@ PARENT_INDICES = np.array(
 
 
 def landmarks_to_xyz(landmarks: Iterable) -> np.ndarray:
+    # MediaPipe landmark diubah menjadi matriks tetap 21 x 3 agar mudah diproses model.
     points = np.array([[lm.x, lm.y, lm.z] for lm in landmarks], dtype=np.float32)
     if points.shape != (LANDMARK_COUNT, 3):
         raise ValueError(f"Expected shape {(LANDMARK_COUNT, 3)}, got {points.shape}")
@@ -29,7 +30,7 @@ def normalize_landmarks(points: np.ndarray) -> np.ndarray:
     wrist = points[0]
     translated = points - wrist
 
-    # Align the wrist-to-middle-finger axis so samples are less sensitive to hand tilt.
+    # Landmark ditranslasikan ke wrist dan diputar agar orientasi tangan lebih konsisten.
     middle_mcp_xy = translated[9, :2]
     if np.linalg.norm(middle_mcp_xy) > 1e-6:
         angle = np.arctan2(middle_mcp_xy[1], middle_mcp_xy[0])
@@ -48,10 +49,12 @@ def normalize_landmarks(points: np.ndarray) -> np.ndarray:
     max_radius = np.max(np.linalg.norm(translated[1:], axis=1))
     scale = max(palm_height, palm_width, max_radius, 1e-6)
 
+    # Skala berbasis geometri tangan membuat ukuran tangan dekat/jauh kamera tetap sebanding.
     return translated / scale
 
 
 def build_feature_stack(normalized: np.ndarray, feature_dim: int = FEATURE_DIM) -> np.ndarray:
+    # Fitur akhir menggabungkan posisi ternormalisasi, arah terhadap parent joint, dan jarak global.
     centroid = normalized.mean(axis=0, keepdims=True)
     wrist_distance = np.linalg.norm(normalized, axis=1, keepdims=True)
     centroid_distance = np.linalg.norm(normalized - centroid, axis=1, keepdims=True)
@@ -71,6 +74,7 @@ def build_feature_stack(normalized: np.ndarray, feature_dim: int = FEATURE_DIM) 
 
 
 def landmarks_to_sequence(landmarks: Iterable, feature_dim: int = FEATURE_DIM) -> np.ndarray:
+    # Untuk gambar statis, landmark 21 titik diperlakukan sebagai pseudo-sequence untuk LSTM.
     points = landmarks_to_xyz(landmarks)
     normalized = normalize_landmarks(points)
     return build_feature_stack(normalized, feature_dim=feature_dim)
@@ -78,3 +82,4 @@ def landmarks_to_sequence(landmarks: Iterable, feature_dim: int = FEATURE_DIM) -
 
 def empty_sequence(feature_dim: int = FEATURE_DIM, max_hands: int = MAX_HANDS) -> np.ndarray:
     return np.zeros((LANDMARK_COUNT * max_hands, feature_dim), dtype=np.float32)
+

@@ -2,7 +2,7 @@
 
 import json
 import math
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -28,7 +28,7 @@ def build_classification_table_lines(classification_report_payload: dict | None)
 
     lines = [
         '',
-        '## 7. Classification Report per Kelas',
+        '## 8. Classification Report per Kelas',
         '| Kelas | Precision | Recall | F1-score | Support |',
         '|---|---:|---:|---:|---:|',
     ]
@@ -51,6 +51,30 @@ def build_classification_table_lines(classification_report_payload: dict | None)
         ]
     )
     return lines
+
+
+def build_thesis_explanation_lines(metadata: dict, classification_report_payload: dict | None = None) -> list[str]:
+    sequence_length = int(metadata['sequence_length'])
+    feature_dim = int(metadata['feature_dim'])
+    class_count = len(metadata['class_names'])
+    accuracy = float(metadata['final_val_accuracy'])
+    macro_f1 = 0.0
+    weighted_f1 = 0.0
+    if classification_report_payload:
+        macro_f1 = float(classification_report_payload.get('macro_avg', {}).get('f1_score', 0.0))
+        weighted_f1 = float(classification_report_payload.get('weighted_avg', {}).get('f1_score', 0.0))
+
+    return [
+        '',
+        '## 2. Uraian Metode dalam Bahasa Laporan',
+        'Penelitian ini mengimplementasikan sistem pengenalan alfabet Bahasa Isyarat BISINDO berbasis citra statis dengan pendekatan hibrida skeleton dan Long Short-Term Memory (LSTM). Tahap awal sistem adalah ekstraksi ciri tangan menggunakan MediaPipe Hands untuk memperoleh titik-titik landmark anatomi tangan. Setiap tangan direpresentasikan oleh 21 landmark tiga dimensi, sehingga ketika sistem mendeteksi dua tangan, total landmark yang digunakan menjadi 42 titik.',
+        'Landmark yang diperoleh tidak langsung digunakan sebagai masukan model. Tahap praproses dilakukan melalui translasi terhadap titik wrist, rotasi orientasi terhadap sumbu acuan wrist ke middle metacarpophalangeal joint, dan normalisasi skala berdasarkan geometri telapak tangan. Tahap ini bertujuan untuk mengurangi variasi yang disebabkan oleh perbedaan posisi tangan, kemiringan, serta jarak tangan terhadap kamera.',
+        f'Setelah normalisasi, setiap landmark diubah menjadi vektor fitur berdimensi {feature_dim}, yang terdiri atas koordinat ternormalisasi, vektor relatif terhadap parent joint, jarak terhadap wrist, serta jarak terhadap centroid. Dengan demikian, satu sampel citra direpresentasikan sebagai matriks berukuran {sequence_length} x {feature_dim}. Representasi ini selanjutnya diperlakukan sebagai pseudo-sequence agar hubungan antarlandmark dapat dipelajari secara berurutan oleh model LSTM meskipun data yang digunakan berupa gambar statis, bukan video.',
+        'Pemilihan arsitektur LSTM pada penelitian ini didasarkan pada kemampuannya dalam mempelajari dependensi antar elemen urutan. Pada implementasinya, model menggunakan Bidirectional LSTM sehingga proses pembelajaran dilakukan dari arah awal ke akhir dan dari arah akhir ke awal sequence. Pendekatan ini memungkinkan model menangkap keterkaitan spasial antarlandmark dengan konteks yang lebih lengkap dibandingkan LSTM satu arah.',
+        f'Keluaran dari lapisan Bidirectional LSTM kemudian diteruskan ke lapisan dense untuk melakukan pemetaan fitur menuju {class_count} kelas alfabet BISINDO. Lapisan output menggunakan fungsi aktivasi softmax untuk menghasilkan probabilitas setiap kelas. Kelas dengan probabilitas tertinggi ditetapkan sebagai hasil prediksi akhir sistem.',
+        f'Berdasarkan hasil pelatihan terakhir, model memperoleh akurasi validasi sebesar {pct(accuracy)}. Selain itu, evaluasi multi-kelas menunjukkan nilai macro F1-score sebesar {macro_f1:.4f} dan weighted F1-score sebesar {weighted_f1:.4f}. Nilai tersebut menunjukkan bahwa model tidak hanya memiliki ketepatan prediksi yang tinggi secara umum, tetapi juga cukup seimbang dalam mengenali berbagai kelas alfabet BISINDO.',
+        'Secara keseluruhan, alur kerja sistem terdiri atas empat tahap utama, yaitu akuisisi citra, ekstraksi skeleton tangan, pembentukan pseudo-sequence fitur, dan klasifikasi dengan model Bidirectional LSTM. Rangkaian proses ini dirancang agar sistem mampu mengenali alfabet BISINDO secara otomatis baik dari citra unggahan maupun frame webcam secara real-time.',
+    ]
 
 
 def build_report_lines(
@@ -94,7 +118,7 @@ def build_report_lines(
         total_samples_cm = int(confusion_matrix_payload.get('total_samples', 0))
         confusion_summary_lines = [
             '',
-            '## 6. Confusion Matrix',
+            '## 7. Confusion Matrix',
             f'- Total sampel validasi pada confusion matrix: {total_samples_cm}',
             f'- Prediksi benar pada diagonal utama: {diagonal}',
             f'- Gambar confusion matrix: {confusion_matrix_payload.get("image_path", "")}',
@@ -103,6 +127,10 @@ def build_report_lines(
         ]
 
     classification_table_lines = build_classification_table_lines(classification_report_payload)
+    thesis_explanation_lines = build_thesis_explanation_lines(
+        metadata,
+        classification_report_payload=classification_report_payload,
+    )
 
     wrist = (0.50, 0.60, 0.00)
     index_mcp = (0.45, 0.40, -0.01)
@@ -196,10 +224,12 @@ def build_report_lines(
         f'- Akurasi validasi akhir: {pct(float(metadata["final_val_accuracy"]))}',
         f'- Loss validasi akhir: {float(metadata["final_val_loss"]):.6f}',
         '',
-        '## 2. Perhitungan Manual Preprocessing Skeleton',
+        *thesis_explanation_lines,
+        '',
+        '## 3. Perhitungan Manual Preprocessing Skeleton',
         'Pada aplikasi ini, setiap gambar dapat dibaca sampai 2 tangan. Tiap tangan memiliki 21 landmark MediaPipe, sehingga sequence length = 2 x 21 = 42 timestep.',
         '',
-        '### 2.1 Translasi terhadap wrist',
+        '### 3.1 Translasi terhadap wrist',
         'Rumus: translated = landmark - wrist',
         f'- Wrist = {wrist}',
         f'- Index MCP = {index_mcp}',
@@ -207,7 +237,7 @@ def build_report_lines(
         f'- Middle MCP = {middle_mcp}',
         f'- Hasil translasi Middle MCP = {translated_middle}',
         '',
-        '### 2.2 Rotasi orientasi tangan',
+        '### 3.2 Rotasi orientasi tangan',
         'Aplikasi memutar sumbu x-y agar arah wrist ke middle MCP menjadi tegak. Ini membuat model lebih stabil terhadap tangan yang miring.',
         f'- Sudut awal = atan2({translated_middle[1]:.4f}, {translated_middle[0]:.4f}) = {angle:.6f} rad',
         f'- Target sudut = -pi/2 = {-math.pi / 2:.6f} rad',
@@ -217,19 +247,19 @@ def build_report_lines(
         f'- Index MCP setelah rotasi = ({rotated_index[0]:.6f}, {rotated_index[1]:.6f}, {rotated_index[2]:.6f})',
         f'- Middle MCP setelah rotasi = ({rotated_middle[0]:.6f}, {rotated_middle[1]:.6f}, {rotated_middle[2]:.6f})',
         '',
-        '### 2.3 Penentuan skala normalisasi',
+        '### 3.3 Penentuan skala normalisasi',
         'Aplikasi memilih skala terbesar dari tinggi telapak, lebar telapak, dan radius maksimum.',
         f'- Palm height = ||middle_mcp|| = {palm_height:.6f}',
         f'- Palm width = ||index_mcp - pinky_mcp|| = {palm_width:.6f}',
         f'- Max radius = {max_radius:.6f}',
         f'- Skala akhir = max(palm_height, palm_width, max_radius) = {scale:.6f}',
         '',
-        '### 2.4 Normalisasi satu landmark contoh',
+        '### 3.4 Normalisasi satu landmark contoh',
         'Rumus: normalized = translated_rotated / scale',
         f'- Normalized Index MCP = ({normalized_index[0]:.6f}, {normalized_index[1]:.6f}, {normalized_index[2]:.6f})',
         f'- Normalized Middle MCP = ({normalized_middle[0]:.6f}, {normalized_middle[1]:.6f}, {normalized_middle[2]:.6f})',
         '',
-        '### 2.5 Penyusunan feature vector per landmark',
+        '### 3.5 Penyusunan feature vector per landmark',
         'Untuk model terbaru, satu landmark menghasilkan 8 fitur:',
         '- normalized_x',
         '- normalized_y',
@@ -249,36 +279,36 @@ def build_report_lines(
         'Maka feature vector ilustratif untuk Index MCP adalah:',
         f'[{normalized_index[0]:.6f}, {normalized_index[1]:.6f}, {normalized_index[2]:.6f}, {normalized_index[0]:.6f}, {normalized_index[1]:.6f}, {normalized_index[2]:.6f}, {wrist_distance_index:.6f}, {centroid_distance_index:.6f}]',
         '',
-        '## 3. Perhitungan Ukuran Input Model',
+        '## 4. Perhitungan Ukuran Input Model',
         f'- Maksimum tangan terbaca = 2',
         f'- Landmark per tangan = 21',
         f'- Sequence length = 2 x 21 = {sequence_length}',
         f'- Feature dim = {feature_dim}',
         f'- Total nilai input per sampel = {sequence_length} x {feature_dim} = {total_input_features}',
         '',
-        '## 4. Perhitungan Manual Parameter LSTM',
+        '## 5. Perhitungan Manual Parameter LSTM',
         'Rumus parameter satu layer LSTM: 4 x ((input_dim + units) x units + units)',
         '',
-        '### 4.1 Bidirectional LSTM pertama',
+        '### 5.1 Bidirectional LSTM pertama',
         f'- input_dim = {feature_dim}',
         f'- units = {lstm1_units}',
         f'- Parameter satu arah = 4 x (({feature_dim} + {lstm1_units}) x {lstm1_units} + {lstm1_units}) = {lstm1_single}',
         f'- Karena bidirectional, total = 2 x {lstm1_single} = {lstm1_bi}',
         '',
-        '### 4.2 Bidirectional LSTM kedua',
+        '### 5.2 Bidirectional LSTM kedua',
         f'- input_dim = 2 x {lstm1_units} = {lstm2_input_dim}',
         f'- units = {lstm2_units}',
         f'- Parameter satu arah = 4 x (({lstm2_input_dim} + {lstm2_units}) x {lstm2_units} + {lstm2_units}) = {lstm2_single}',
         f'- Karena bidirectional, total = 2 x {lstm2_single} = {lstm2_bi}',
         '',
-        '### 4.3 Dense layer',
+        '### 5.3 Dense layer',
         f'- Dense(64): ({lstm2_units * 2} x {dense_units}) + {dense_units} = {dense1_params}',
         f'- Dense output(26): ({dense_units} x {class_count}) + {class_count} = {output_params}',
         '',
-        '### 4.4 Total parameter model',
+        '### 5.4 Total parameter model',
         f'- Total = {lstm1_bi} + {lstm2_bi} + {dense1_params} + {output_params} = {total_params}',
         '',
-        '## 5. Perhitungan Prediksi Softmax',
+        '## 6. Perhitungan Prediksi Softmax',
         'Output model adalah 26 nilai logit yang diubah menjadi probabilitas dengan softmax:',
         'softmax(z_i) = exp(z_i) / sum(exp(z_j))',
         '',
@@ -291,7 +321,7 @@ def build_report_lines(
         *confusion_summary_lines,
         *classification_table_lines,
         '',
-        '## 8. Kesimpulan untuk Laporan',
+        '## 9. Kesimpulan untuk Laporan',
         f'Aplikasi membaca maksimum 2 tangan, menyusun sequence sepanjang {sequence_length} timestep, dan menghasilkan {feature_dim} fitur per timestep sehingga total input per sampel adalah {total_input_features} nilai.',
         f'Dari metadata training terbaru, model mencapai akurasi validasi {pct(float(metadata["final_val_accuracy"]))} dengan total parameter jaringan sekitar {total_params:,} parameter trainable.',
         'Perhitungan manual ini dapat langsung dimasukkan ke bab metode, implementasi, dan analisis hasil pada laporan skripsi atau proyek.',
@@ -363,8 +393,8 @@ def write_docx(lines: list[str], output_path: Path) -> None:
   <dc:title>Perhitungan Manual BISINDO</dc:title>
   <dc:creator>OpenAI Codex</dc:creator>
   <cp:lastModifiedBy>OpenAI Codex</cp:lastModifiedBy>
-  <dcterms:created xsi:type="dcterms:W3CDTF">{datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}</dcterms:created>
-  <dcterms:modified xsi:type="dcterms:W3CDTF">{datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}</dcterms:modified>
+  <dcterms:created xsi:type="dcterms:W3CDTF">{datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')}</dcterms:created>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">{datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')}</dcterms:modified>
 </cp:coreProperties>'''
 
     app = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
